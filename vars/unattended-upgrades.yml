@@ -1,0 +1,3 @@
+automatic_reboot: "true"
+automatic_reboot_time: "04:00"
+unattended_upgrades_email: "rohit.mmm1996@gmail.com"

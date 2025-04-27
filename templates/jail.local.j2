@@ -1,0 +1,19 @@
+[DEFAULT]
+bantime = {{ fail2ban_bantime }}
+findtime = {{ fail2ban_findtime }}
+maxretry = {{ fail2ban_maxretry }}
+backend = systemd
+mta = msmtp
+action = %(action_mw)s[from={{ msmtp_from }}, sender={{ msmtp_from }}, destination={{ fail2ban_destination }}, sendername=Fail2Ban]
+sender = {{ msmtp_from }}
+destemail = {{ fail2ban_destination }}
+sendername = Fail2Ban
+
+[sshd]
+enabled = true
+port = ssh
+filter = sshd
+logpath = /var/log/auth.log
+maxretry = {{ fail2ban_maxretry }}
+bantime = {{ fail2ban_bantime }}
+findtime = {{ fail2ban_findtime }}

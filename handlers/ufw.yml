@@ -1,0 +1,4 @@
+- name: Reload ufw
+  ansible.builtin.systemd:
+    name: ufw
+    state: reloaded

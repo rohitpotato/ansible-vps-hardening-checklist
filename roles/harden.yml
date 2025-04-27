@@ -1,0 +1,193 @@
+- name: Harden VPS
+  hosts: vps
+  become: yes
+
+  vars_files:
+    - ../vars/fail2ban.yml
+    - ../vars/msmtp.yml
+
+  tasks:
+    - name: Ping server to check connection
+      ping:
+
+    - name: Install ufw
+      ansible.builtin.package:
+        name: ufw
+        state: present
+        update_cache: yes
+
+    - name: Make sure ipv6 is enabled
+      ansible.builtin.lineinfile:
+        path: /etc/default/ufw
+        state: present
+        search_string: "IPV6="
+        line: "IPV6=yes"
+      notify: Reload ufw
+
+    - name: Set default incoming policy to deny
+      community.general.ufw:
+        policy: deny
+        direction: incoming
+
+    - name: Set default outgoing policy to allow
+      community.general.ufw:
+        policy: allow
+        direction: outgoing
+
+    - name: Allow port 22 (SSH)
+      community.general.ufw:
+        rule: allow
+        port: "22"
+        proto: tcp
+
+    - name: Allow ports 443 and 80 (HTTPS and HTTP)
+      community.general.ufw:
+        rule: allow
+        port: "{{ item }}"
+        proto: tcp
+      loop:
+        - 443
+        - 80
+
+    - name: Enable ufw
+      community.general.ufw:
+        state: enabled
+
+    - name: Create rohit user with locked password
+      ansible.builtin.user:
+        name: rohit
+        groups: sudo
+        shell: /bin/bash
+        create_home: yes
+        password: "*"
+
+    - name: Add ssh key for the created user
+      ansible.posix.authorized_key:
+        user: rohit
+        state: present
+        key: "{{ lookup('file', '~/.ssh/id_netcup_2_worker.pub')  }}"
+
+    - name: Allow passwordless sudo for rohit user
+      ansible.builtin.lineinfile:
+        path: /etc/sudoers.d/rohit
+        line: "rohit ALL=(ALL) NOPASSWD: ALL"
+        create: yes
+        mode: "0440"
+        owner: root
+        group: root
+        validate: "/usr/sbin/visudo -cf %s"
+
+    - name: Disable password authentication
+      ansible.builtin.lineinfile:
+        path: /etc/ssh/sshd_config
+        line: "PasswordAuthentication no"
+        regexp: "^#?PasswordAuthentication"
+        state: present
+        backup: yes
+      notify: Restart sshd
+
+    - name: Disable empty password login
+      ansible.builtin.lineinfile:
+        path: /etc/ssh/sshd_config
+        line: "PermitEmptyPasswords no"
+        regexp: "^#?PermitEmptyPassword"
+        state: present
+        backup: yes
+      notify: Restart sshd
+
+    - name: Disable root login
+      ansible.builtin.lineinfile:
+        path: /etc/ssh/sshd_config
+        line: "PermitRootLogin no"
+        regexp: "^#?PermitRootLogin"
+        state: present
+        backup: yes
+      notify: Restart sshd
+
+    - name: Install bsd-mailx for mail command support
+      ansible.builtin.package:
+        name: bsd-mailx
+        state: present
+        update_cache: yes
+
+    - name: Install msmtp
+      ansible.builtin.package:
+        name: msmtp
+        state: present
+        update_cache: yes
+
+    - name: Link msmtp to sendmail for fail2ban email alerts
+      ansible.builtin.file:
+        src: /usr/bin/msmtp
+        dest: /usr/sbin/sendmail
+        state: link
+        force: true
+        owner: root
+        group: root
+        mode: "0755"
+
+    - name: Configure msmtp
+      ansible.builtin.template:
+        src: "../templates/msmtprc.j2"
+        dest: /etc/msmtprc
+        mode: "0644"
+        owner: root
+        group: root
+
+    - name: Configure fail2ban action.d/msmtp.conf
+      ansible.builtin.template:
+        src: "../templates/msmtp.conf.j2"
+        dest: /etc/fail2ban/action.d/msmtp-whois.conf
+        mode: "0644"
+        owner: root
+        group: root
+
+    - name: Install fail2ban
+      ansible.builtin.package:
+        name: fail2ban
+        state: present
+        update_cache: yes
+
+    - name: Configure fail2ban fail2ban.local
+      ansible.builtin.template:
+        backup: true
+        src: "../templates/jail.local.j2"
+        dest: /etc/fail2ban/jail.local
+        mode: "0644"
+        owner: root
+        group: root
+      notify: Restart fail2ban
+
+    - name: Enable fail2ban service
+      ansible.builtin.systemd:
+        name: fail2ban
+        state: started
+        enabled: yes
+
+    - name: Install unattended-upgrades
+      ansible.builtin.package:
+        name: unattended-upgrades
+        state: present
+        update_cache: yes
+
+    - name: Enable unattended-upgrades
+      ansible.builtin.systemd:
+        name: unattended-upgrades
+        state: started
+        enabled: yes
+
+    - name: Configure unattended-upgrades
+      ansible.builtin.template:
+        src: "../templates/unattended-updates.j2"
+        dest: /etc/apt/apt.conf.d/50unattended-upgrades
+        backup: true
+        group: root
+        owner: root
+        mode: "0644"
+      notify: Restart unattended-upgrades
+
+  handlers:
+    - import_tasks: ../handlers/ufw.yml
+    - import_tasks: ../handlers/sshd.yml
+    - import_tasks: ../handlers/fail2ban.yml
+    - import_tasks: ../handlers/unattended-upgrades.yml
