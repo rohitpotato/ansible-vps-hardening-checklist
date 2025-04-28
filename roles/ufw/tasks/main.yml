@@ -1,0 +1,62 @@
+---
+# UFW (Uncomplicated Firewall) Configuration
+# This role sets up and configures the UFW firewall
+# Implements a default deny policy with specific allow rules for required services
+
+- name: Install ufw
+  # Installs the UFW package which provides a user-friendly interface to iptables
+  # Essential for implementing network access control
+  ansible.builtin.package:
+    name: ufw
+    state: present
+    update_cache: yes
+
+- name: Make sure ipv6 is enabled
+  # Ensures UFW handles both IPv4 and IPv6 traffic
+  # Important for dual-stack networks and future IPv6 compatibility
+  ansible.builtin.lineinfile:
+    path: /etc/default/ufw
+    state: present
+    search_string: "IPV6="
+    line: "IPV6=yes"
+  notify: Reload ufw
+
+- name: Set default incoming policy to deny
+  # Implements the principle of least privilege
+  # All incoming connections are blocked by default
+  # Only explicitly allowed services will be accessible
+  community.general.ufw:
+    policy: deny
+    direction: incoming
+
+- name: Set default outgoing policy to allow
+  # Allows all outgoing connections by default
+  # Enables the system to make outbound connections for updates and services
+  community.general.ufw:
+    policy: allow
+    direction: outgoing
+
+- name: Allow port 22 (SSH)
+  # Enables SSH access which is essential for remote administration
+  # SSH is required for Ansible and manual system management
+  community.general.ufw:
+    rule: allow
+    port: "22"
+    proto: tcp
+
+- name: Allow ports 443 and 80 (HTTPS and HTTP)
+  # Enables web server access
+  # Port 80 for HTTP and 443 for HTTPS (secure web traffic)
+  community.general.ufw:
+    rule: allow
+    port: "{{ item }}"
+    proto: tcp
+  loop:
+    - 443
+    - 80
+
+- name: Enable ufw
+  # Activates the firewall with the configured rules
+  # This is the final step that makes all previous configurations active
+  community.general.ufw:
+    state: enabled

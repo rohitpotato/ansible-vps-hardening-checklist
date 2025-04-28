@@ -1,0 +1,32 @@
+---
+# Additional Hardening Tasks
+# This role implements miscellaneous security hardening measures
+# Focuses on system maintenance and update automation
+
+- name: Install unattended-upgrades
+  # Installs automatic security updates package
+  # Ensures system stays up-to-date with security patches
+  ansible.builtin.package:
+    name: unattended-upgrades
+    state: present
+    update_cache: yes
+
+- name: Enable unattended-upgrades
+  # Starts and enables automatic updates service
+  # Ensures security updates are applied automatically
+  ansible.builtin.systemd:
+    name: unattended-upgrades
+    state: started
+    enabled: yes
+
+- name: Configure unattended-upgrades
+  # Sets up automatic update configuration
+  # Defines which updates to install and when to install them
+  ansible.builtin.template:
+    src: "../../templates/unattended-updates.j2"
+    dest: /etc/apt/apt.conf.d/50unattended-upgrades
+    backup: true
+    group: root
+    owner: root
+    mode: "0644"
+  notify: Restart unattended-upgrades

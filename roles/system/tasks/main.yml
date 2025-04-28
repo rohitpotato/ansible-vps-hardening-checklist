@@ -1,0 +1,108 @@
+---
+# System hardening tasks
+# This role implements basic system-level security configurations
+# including network stack hardening and system parameter optimization
+
+- name: Disable IP forwarding (IPv4)
+  # Prevents the system from acting as a router
+  # Reduces attack surface by limiting packet forwarding capabilities
+  ansible.posix.sysctl:
+    name: net.ipv4.ip_forward
+    value: "0"
+    state: present
+    reload: yes
+
+- name: Disable IP forwarding (IPv6)
+  # Similar to IPv4, prevents IPv6 packet forwarding
+  # Important for systems not acting as routers
+  ansible.posix.sysctl:
+    name: net.ipv6.conf.all.forwarding
+    value: "0"
+    state: present
+    reload: yes
+
+- name: Disable source-routed packets (IPv4)
+  # Prevents IP source routing which can be used in spoofing attacks
+  # Source routing allows sender to specify the route a packet should take
+  ansible.posix.sysctl:
+    name: net.ipv4.conf.all.accept_source_route
+    value: "0"
+    state: present
+    reload: yes
+
+- name: Disable source-routed packets (IPv6)
+  # IPv6 equivalent of source routing protection
+  ansible.posix.sysctl:
+    name: net.ipv6.conf.all.accept_source_route
+    value: "0"
+    state: present
+    reload: yes
+
+- name: Disable ICMP redirects (IPv4)
+  # Prevents ICMP redirect messages which could be used in MITM attacks
+  # ICMP redirects can be used to manipulate routing tables
+  ansible.posix.sysctl:
+    name: net.ipv4.conf.all.accept_redirects
+    value: "0"
+    state: present
+    reload: yes
+
+- name: Disable ICMP redirects (IPv6)
+  # IPv6 equivalent of ICMP redirect protection
+  ansible.posix.sysctl:
+    name: net.ipv6.conf.all.accept_redirects
+    value: "0"
+    state: present
+    reload: yes
+
+- name: Enable Reverse Path Filtering
+  # Helps prevent IP spoofing by verifying the source address
+  # Drops packets that don't match the expected routing path
+  ansible.posix.sysctl:
+    name: net.ipv4.conf.all.rp_filter
+    value: "1"
+    state: present
+    reload: yes
+
+- name: Enable Reverse Path Filtering on default interfaces
+  # Applies reverse path filtering to newly created interfaces
+  ansible.posix.sysctl:
+    name: net.ipv4.conf.default.rp_filter
+    value: "1"
+    state: present
+    reload: yes
+
+- name: Ignore ICMP broadcast requests
+  # Prevents ICMP broadcast storms and potential DoS attacks
+  # Reduces system load from broadcast traffic
+  ansible.posix.sysctl:
+    name: net.ipv4.icmp_echo_ignore_broadcasts
+    value: "1"
+    state: present
+    reload: yes
+
+- name: Enable TCP SYN cookies
+  # Protects against SYN flood attacks
+  # Allows the system to handle SYN floods without exhausting resources
+  ansible.posix.sysctl:
+    name: net.ipv4.tcp_syncookies
+    value: "1"
+    state: present
+    reload: yes
+
+- name: Disable IPv6 support
+  # Disables IPv6 if not needed
+  # Reduces attack surface by disabling unused network stack
+  ansible.posix.sysctl:
+    name: net.ipv6.conf.all.disable_ipv6
+    value: "1"
+    state: present
+    reload: yes
+
+- name: Disable IPv6 support (default)
+  # Ensures IPv6 remains disabled for new interfaces
+  ansible.posix.sysctl:
+    name: net.ipv6.conf.default.disable_ipv6
+    value: "1"
+    state: present
+    reload: yes

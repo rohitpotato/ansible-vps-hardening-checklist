@@ -1,0 +1,57 @@
+---
+# Filesystem Security Hardening
+# This role implements security measures for temporary and shared memory filesystems
+# Focuses on preventing common attack vectors through filesystem restrictions
+
+- name: Secure /tmp with tmpfs
+  # Mounts /tmp as a tmpfs (RAM-based filesystem)
+  # Security implications:
+  # - noexec: Prevents execution of binaries from /tmp
+  # - nosuid: Prevents SUID/SGID bits from being set
+  # - nodev: Prevents device files from being created
+  # Benefits:
+  # - Prevents attackers from executing malicious code from /tmp
+  # - Clears on reboot, removing any persistent threats
+  # - Prevents privilege escalation through SUID binaries
+  ansible.posix.mount:
+    path: /tmp
+    src: tmpfs
+    fstype: tmpfs
+    opts: "defaults,noexec,nosuid,nodev"
+    state: mounted
+
+- name: Bind /var/tmp to /tmp
+  # Creates a bind mount of /var/tmp to /tmp
+  # Security implications:
+  # - Applies same security restrictions to /var/tmp as /tmp
+  # - Ensures consistent security across both temporary directories
+  # Benefits:
+  # - Extends /tmp security to /var/tmp
+  # - Prevents bypass of /tmp restrictions through /var/tmp
+  ansible.posix.mount:
+    path: /var/tmp
+    src: /tmp
+    fstype: none
+    opts: "bind"
+    state: mounted
+
+- name: Secure /dev/shm
+  # Secures shared memory filesystem
+  # Security implications:
+  # - noexec: Prevents execution of binaries from shared memory
+  # - nosuid: Prevents SUID/SGID bits in shared memory
+  # - nodev: Prevents device files in shared memory
+  # Benefits:
+  # - Prevents shared memory based attacks
+  # - Stops execution of malicious code from shared memory
+  # - Prevents privilege escalation through shared memory
+  ansible.posix.mount:
+    path: /dev/shm
+    src: tmpfs
+    fstype: tmpfs
+    opts: "defaults,noexec,nosuid,nodev"
+    state: mounted
+
+- name: Reload systemd to apply new fstab mounts cleanly
+  ansible.builtin.systemd:
+    daemon_reload: yes

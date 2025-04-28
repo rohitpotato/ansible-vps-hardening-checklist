@@ -1,0 +1,38 @@
+---
+# Main playbook for VPS hardening and configuration
+# This playbook orchestrates the deployment of all security and system configurations
+# It is designed to be run on fresh VPS installations to establish a secure baseline
+# IMPORTANT: Roles are ordered to prevent getting locked out of the system
+
+- name: VPS Hardening and Configuration
+  hosts: vps
+  become: yes
+
+  # Load common variables used across roles
+  vars_files:
+    - ../vars/fail2ban.yml
+    - ../vars/msmtp.yml
+    - ../vars/ssh.yml
+    - ../vars/unattended-upgrades.yml
+
+  # Import handlers for all services
+  handlers:
+    - import_tasks: ../handlers/ufw.yml
+    - import_tasks: ../handlers/sshd.yml
+    - import_tasks: ../handlers/fail2ban.yml
+    - import_tasks: ../handlers/unattended-upgrades.yml
+
+  # Import all roles in the correct order to ensure dependencies are met
+  # Order is critical to prevent getting locked out:
+  # 1. SSH setup first to ensure we can still connect
+  # 2. UFW with SSH port open
+  # 3. System hardening
+  # 4. Fail2ban to protect SSH
+  # 5. Additional hardening steps
+  roles:
+    - ssh # SSH setup first to ensure we can still connect
+    - ufw # Firewall with SSH port open
+    - system # System hardening
+    - fail2ban # Intrusion prevention
+    - harden # Additional hardening steps
+    - filesystem # Filesystem hardening

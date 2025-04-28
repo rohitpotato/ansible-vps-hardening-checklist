@@ -1,0 +1,124 @@
+---
+# SSH Server Hardening
+# This role implements security best practices for SSH server configuration
+# Focuses on disabling insecure options and enforcing strong cryptographic settings
+
+- name: Create rohit user with locked password
+  # Creates a dedicated administrative user
+  # Password is locked (*) to enforce key-based authentication
+  ansible.builtin.user:
+    name: "{{ user_name }}"
+    groups: sudo
+    shell: /bin/bash
+    create_home: yes
+    password: "*"
+
+- name: Add ssh key for the created user
+  # Configures public key authentication for the admin user
+  # Enables secure, passwordless login using SSH keys
+  ansible.posix.authorized_key:
+    user: "{{ user_name }}"
+    state: present
+    key: "{{ lookup('file', ssh_key_path) }}"
+
+- name: Allow passwordless sudo for rohit user
+  # Grants administrative privileges without requiring password
+  # Improves automation capabilities while maintaining security through key-based auth
+  ansible.builtin.lineinfile:
+    path: /etc/sudoers.d/{{ user_name }}
+    line: "{{ user_name }} ALL=(ALL) NOPASSWD: ALL"
+    create: yes
+    mode: "0440"
+    owner: root
+    group: root
+    validate: "/usr/sbin/visudo -cf %s"
+
+- name: Disable password authentication
+  # Forces key-based authentication only
+  # Eliminates the risk of password brute-force attacks
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    line: "PasswordAuthentication no"
+    regexp: "^#?PasswordAuthentication"
+    state: present
+    backup: yes
+  notify: Restart sshd
+
+- name: Disable empty password login
+  # Prevents login attempts with empty passwords
+  # Eliminates a potential security vulnerability
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    line: "PermitEmptyPasswords no"
+    regexp: "^#?PermitEmptyPassword"
+    state: present
+    backup: yes
+  notify: Restart sshd
+
+- name: Disable root login
+  # Prevents direct root login via SSH
+  # Forces administrative access through a regular user account
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    line: "PermitRootLogin no"
+    regexp: "^#?PermitRootLogin"
+    state: present
+    backup: yes
+  notify: Restart sshd
+
+- name: Harden SSH Server Settings
+  block:
+    - name: Set strong Ciphers
+      # Configures modern, secure encryption algorithms
+      # Uses ChaCha20-Poly1305 and AES-256 for optimal security
+      ansible.builtin.lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: "^#?Ciphers"
+        line: "Ciphers chacha20-poly1305@openssh.com,aes256-gcm@openssh.com,aes256-ctr,aes128-ctr"
+        state: present
+        backup: yes
+      notify: Restart sshd
+
+    - name: Set strong MACs
+      # Configures secure message authentication codes
+      # Uses SHA-2 family for integrity verification
+      ansible.builtin.lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: "^#?MACs"
+        line: "MACs hmac-sha2-512,hmac-sha2-256"
+        state: present
+        backup: yes
+      notify: Restart sshd
+
+    - name: Set strong KexAlgorithms
+      # Configures secure key exchange algorithms
+      # Uses Curve25519 for forward secrecy
+      ansible.builtin.lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: "^#?KexAlgorithms"
+        line: "KexAlgorithms curve25519-sha256,curve25519-sha256@libssh.org"
+        state: present
+        backup: yes
+      notify: Restart sshd
+
+    - name: Set ClientAliveInterval
+      # Configures connection timeout
+      # Automatically disconnects idle sessions after 5 minutes
+      ansible.builtin.lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: "^#?ClientAliveInterval"
+        line: "ClientAliveInterval 300"
+        state: present
+        backup: yes
+      notify: Restart sshd
+
+    - name: Set ClientAliveCountMax
+      # Prevents hanging connections
+      # Disables keepalive messages after timeout
+      ansible.builtin.lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: "^#?ClientAliveCountMax"
+        line: "ClientAliveCountMax 0"
+        state: present
+        backup: yes
+      notify: Restart sshd

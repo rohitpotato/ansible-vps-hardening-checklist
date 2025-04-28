@@ -1,0 +1,80 @@
+---
+# Fail2Ban Configuration
+# This role sets up and configures Fail2Ban for intrusion prevention
+# Implements automated blocking of IP addresses after repeated failed authentication attempts
+
+- name: Install bsd-mailx for mail command support
+  # Installs mail client for sending email notifications
+  # Required for fail2ban to send email alerts
+  ansible.builtin.package:
+    name: bsd-mailx
+    state: present
+    update_cache: yes
+
+- name: Install msmtp
+  # Installs lightweight SMTP client
+  # Used for sending email notifications from fail2ban
+  ansible.builtin.package:
+    name: msmtp
+    state: present
+    update_cache: yes
+
+- name: Link msmtp to sendmail for fail2ban email alerts
+  # Creates symbolic link to make msmtp work as sendmail
+  # Allows fail2ban to use msmtp for sending emails
+  ansible.builtin.file:
+    src: /usr/bin/msmtp
+    dest: /usr/sbin/sendmail
+    state: link
+    force: true
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Configure msmtp
+  # Sets up msmtp configuration for sending emails
+  # Configures SMTP server settings and authentication
+  ansible.builtin.template:
+    src: "../../templates/msmtprc.j2"
+    dest: /etc/msmtprc
+    mode: "0644"
+    owner: root
+    group: root
+
+- name: Configure fail2ban action.d/msmtp.conf
+  # Configures fail2ban email notification template
+  # Defines format and content of ban notification emails
+  ansible.builtin.template:
+    src: "../../templates/msmtp.conf.j2"
+    dest: /etc/fail2ban/action.d/msmtp-whois.conf
+    mode: "0644"
+    owner: root
+    group: root
+
+- name: Install fail2ban
+  # Installs fail2ban package
+  # Core component for intrusion prevention
+  ansible.builtin.package:
+    name: fail2ban
+    state: present
+    update_cache: yes
+
+- name: Configure fail2ban fail2ban.local
+  # Sets up main fail2ban configuration
+  # Defines jails, ban times, and notification settings
+  ansible.builtin.template:
+    backup: true
+    src: "../../templates/jail.local.j2"
+    dest: /etc/fail2ban/jail.local
+    mode: "0644"
+    owner: root
+    group: root
+  notify: Restart fail2ban
+
+- name: Enable fail2ban service
+  # Starts and enables fail2ban service
+  # Ensures fail2ban runs at boot and is actively protecting the system
+  ansible.builtin.systemd:
+    name: fail2ban
+    state: started
+    enabled: yes

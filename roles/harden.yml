@@ -104,6 +104,139 @@
         backup: yes
       notify: Restart sshd
 
+    - name: Harden SSH Server Settings
+      block:
+        - name: Set strong Ciphers
+          ansible.builtin.lineinfile:
+            path: /etc/ssh/sshd_config
+            regexp: "^#?Ciphers"
+            line: "Ciphers chacha20-poly1305@openssh.com,aes256-gcm@openssh.com,aes256-ctr,aes128-ctr"
+            state: present
+            backup: yes
+          notify: Restart sshd
+
+        - name: Set strong MACs
+          ansible.builtin.lineinfile:
+            path: /etc/ssh/sshd_config
+            regexp: "^#?MACs"
+            line: "MACs hmac-sha2-512,hmac-sha2-256"
+            state: present
+            backup: yes
+          notify: Restart sshd
+
+        - name: Set strong KexAlgorithms
+          ansible.builtin.lineinfile:
+            path: /etc/ssh/sshd_config
+            regexp: "^#?KexAlgorithms"
+            line: "KexAlgorithms curve25519-sha256,curve25519-sha256@libssh.org"
+            state: present
+            backup: yes
+          notify: Restart sshd
+
+        - name: Set ClientAliveInterval
+          ansible.builtin.lineinfile:
+            path: /etc/ssh/sshd_config
+            regexp: "^#?ClientAliveInterval"
+            line: "ClientAliveInterval 300"
+            state: present
+            backup: yes
+          notify: Restart sshd
+
+        - name: Set ClientAliveCountMax
+          ansible.builtin.lineinfile:
+            path: /etc/ssh/sshd_config
+            regexp: "^#?ClientAliveCountMax"
+            line: "ClientAliveCountMax 0"
+            state: present
+            backup: yes
+          notify: Restart sshd
+
+    - name: Disable IP forwarding (IPv4)
+      ansible.posix.sysctl:
+        name: net.ipv4.ip_forward
+        value: "0"
+        state: present
+        reload: yes
+
+    - name: Disable IP forwarding (IPv6)
+      ansible.posix.sysctl:
+        name: net.ipv6.conf.all.forwarding
+        value: "0"
+        state: present
+        reload: yes
+
+    - name: Disable source-routed packets (IPv4)
+      ansible.posix.sysctl:
+        name: net.ipv4.conf.all.accept_source_route
+        value: "0"
+        state: present
+        reload: yes
+
+    - name: Disable source-routed packets (IPv6)
+      ansible.posix.sysctl:
+        name: net.ipv6.conf.all.accept_source_route
+        value: "0"
+        state: present
+        reload: yes
+
+    - name: Disable ICMP redirects (IPv4)
+      ansible.posix.sysctl:
+        name: net.ipv4.conf.all.accept_redirects
+        value: "0"
+        state: present
+        reload: yes
+
+    - name: Disable ICMP redirects (IPv6)
+      ansible.posix.sysctl:
+        name: net.ipv6.conf.all.accept_redirects
+        value: "0"
+        state: present
+        reload: yes
+
+    - name: Enable Reverse Path Filtering
+      ansible.posix.sysctl:
+        name: net.ipv4.conf.all.rp_filter
+        value: "1"
+        state: present
+        reload: yes
+
+    - name: Enable Reverse Path Filtering on default interfaces
+      ansible.posix.sysctl:
+        name: net.ipv4.conf.default.rp_filter
+        value: "1"
+        state: present
+        reload: yes
+
+    - name: Ignore ICMP broadcast requests
+      ansible.posix.sysctl:
+        name: net.ipv4.icmp_echo_ignore_broadcasts
+        value: "1"
+        state: present
+        reload: yes
+
+    - name: Enable TCP SYN cookies
+      ansible.posix.sysctl:
+        name: net.ipv4.tcp_syncookies
+        value: "1"
+        state: present
+        reload: yes
+
+    # Optional: Disable IPv6 completely if not needed
+    # Comment these out if you plan to use IPv6 later
+    - name: Disable IPv6 support
+      ansible.posix.sysctl:
+        name: net.ipv6.conf.all.disable_ipv6
+        value: "1"
+        state: present
+        reload: yes
+
+    - name: Disable IPv6 support (default)
+      ansible.posix.sysctl:
+        name: net.ipv6.conf.default.disable_ipv6
+        value: "1"
+        state: present
+        reload: yes
+
     - name: Install bsd-mailx for mail command support
       ansible.builtin.package:
         name: bsd-mailx
