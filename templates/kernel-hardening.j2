@@ -1,0 +1,31 @@
+# Kernel Hardening Parameters
+# These settings enhance kernel security by restricting access to sensitive information and features
+
+# Protect kernel pointers (kptr_restrict)
+# Value 2: Hide kernel symbol addresses from all users
+# - Prevents both privileged and unprivileged users from seeing kernel addresses
+# - Makes kernel address space layout randomization more effective
+# - Helps prevent kernel exploits that rely on knowing kernel addresses
+kernel.kptr_restrict = 2
+
+# Restrict dmesg access (dmesg_restrict)
+# Value 1: Only allow root to view kernel logs
+# - Prevents unprivileged users from viewing kernel logs
+# - Hides potentially sensitive information about kernel memory addresses
+# - Reduces information leakage that could aid in exploit development
+kernel.dmesg_restrict = 1
+
+# Block loading dangerous memory handlers (ldisc_autoload)
+# Value 0: Disable automatic loading of line disciplines
+# - Prevents automatic loading of potentially malicious TTY line disciplines
+# - Mitigates attacks that exploit vulnerable line disciplines
+# - Requires explicit loading of needed line disciplines by root
+dev.tty.ldisc_autoload = 0
+
+# Restrict ptrace usage (ptrace_scope)
+# Value 1: Restricted ptrace
+# - Only allows parent processes to ptrace child processes
+# - Prevents processes from attaching to existing processes
+# - Reduces risk of runtime memory analysis and manipulation
+# - Helps prevent debugger-based attacks while maintaining debugging capabilities
+kernel.yama.ptrace_scope = 1

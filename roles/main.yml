@@ -14,6 +14,7 @@
     - ../vars/msmtp.yml
     - ../vars/ssh.yml
     - ../vars/unattended-upgrades.yml
+    - ../vars/rkhunter.yml
 
   # Import handlers for all services
   handlers:
@@ -21,6 +22,9 @@
     - import_tasks: ../handlers/sshd.yml
     - import_tasks: ../handlers/fail2ban.yml
     - import_tasks: ../handlers/unattended-upgrades.yml
+    - import_tasks: ../handlers/kernel-and-memory.yml
+    - import_tasks: ../handlers/auditd.yml
+    - import_tasks: ../handlers/cron.yml
 
   # Import all roles in the correct order to ensure dependencies are met
   # Order is critical to prevent getting locked out:
@@ -35,4 +39,8 @@
     - system # System hardening
     - fail2ban # Intrusion prevention
     - harden # Additional hardening steps
+    - kernel-memory # Kernel and memory hardening
     - filesystem # Filesystem hardening
+    - runtime # Runtime hardening
+    - observability # Observability
+    - rkhunter # Rootkit Hunter

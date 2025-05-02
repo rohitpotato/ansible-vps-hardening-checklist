@@ -1,0 +1,3 @@
+#!/bin/sh
+/usr/bin/rkhunter --update
+/usr/bin/rkhunter --cronjob --report-warnings-only

@@ -1,0 +1,55 @@
+---
+# Rootkit Hunter (RKHunter) Installation and Configuration
+# This role sets up automated rootkit detection and system file integrity monitoring
+# RKHunter helps detect potential rootkits, backdoors, and local exploits
+
+- name: Install rkhunter
+  # Installs the RKHunter package
+  # RKHunter is a security monitoring tool that:
+  # - Scans for rootkits, backdoors, and possible local exploits
+  # - Checks system binaries for suspicious modifications
+  # - Performs various security verifications including file permission checks
+  ansible.builtin.package:
+    name: rkhunter
+    state: present
+
+- name: Initialize rkhunter properties database
+  # Creates baseline database of system properties
+  # Security implications:
+  # - Establishes initial "known-good" state of the system
+  # - Creates checksums of critical system files
+  # - Used as reference point for future integrity checks
+  # Note: Should be run on a clean, trusted system
+  ansible.builtin.command: rkhunter --propupd
+  args:
+    creates: /var/lib/rkhunter/db/rkhunter.dat
+
+- name: Enable daily cron scan
+  # Sets up automated daily security scans
+  # Security benefits:
+  # - Regular automated checking for system compromises
+  # - Early detection of potential security breaches
+  # - Consistent monitoring without manual intervention
+  # Note: Alerts will be sent to configured email addresses
+  ansible.builtin.copy:
+    src: ../../files/rkhunter.cron
+    dest: /etc/cron.daily/rkhunter
+    mode: "0755"
+    owner: root
+    group: root
+
+- name: Configure rkhunter alerts and logging
+  # Configures RKHunter's detection and alerting settings
+  # Configuration includes:
+  # - Email notification settings for suspicious activities
+  # - Log rotation and retention policies
+  # - Custom tests and checks to perform
+  # - Whitelist for known-good modifications
+  # Note: Template should be customized based on system requirements
+  ansible.builtin.template:
+    src: ../../templates/rkhunder.j2
+    dest: /etc/rkhunter.conf
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart cron

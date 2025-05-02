@@ -1,0 +1,20 @@
+# Log all sudo usage
+-w /etc/sudoers -p wa -k sudo_edit
+-w /etc/sudoers.d/ -p wa -k sudo_edit
+
+# Log changes to passwd/shadow
+-w /etc/passwd -p wa -k passwd_change
+-w /etc/shadow -p wa -k shadow_change
+
+# Monitor module loading
+-a always,exit -F arch=b64 -S init_module,finit_module,delete_module -k module_activity
+
+# Monitor execution of privileged binaries
+-w /usr/bin/sudo -p x -k privileged_cmd
+
+# Monitor login events
+-w /var/log/faillog -p wa -k login
+-w /var/log/lastlog -p wa -k login
+
+# Monitor changes to /etc/ssh/
+-w /etc/ssh/sshd_config -p wa -k ssh_config

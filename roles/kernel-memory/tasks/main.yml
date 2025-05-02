@@ -1,0 +1,17 @@
+- name: Harden kernel module loading (blacklist unnecessary modules)
+  ansible.builtin.template:
+    src: ../../templates/kernel-blacklist.j2
+    dest: /etc/modprobe.d/hardening-blacklist.conf
+    mode: "0644"
+    owner: root
+    group: root
+  notify: Reload systemd modules
+
+- name: Apply kernel and memory protections (sysctl settings)
+  ansible.builtin.template:
+    src: ../../templates/kernel-hardening.j2
+    dest: /etc/sysctl.d/99-kernel-hardening.conf
+    mode: "0644"
+    owner: root
+    group: root
+  notify: Reload sysctl settings

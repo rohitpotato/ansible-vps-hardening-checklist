@@ -3,7 +3,7 @@
 # This role implements security best practices for SSH server configuration
 # Focuses on disabling insecure options and enforcing strong cryptographic settings
 
-- name: Create rohit user with locked password
+- name: Create user with locked password
   # Creates a dedicated administrative user
   # Password is locked (*) to enforce key-based authentication
   ansible.builtin.user:
@@ -21,7 +21,7 @@
     state: present
     key: "{{ lookup('file', ssh_key_path) }}"
 
-- name: Allow passwordless sudo for rohit user
+- name: Allow passwordless sudo for user
   # Grants administrative privileges without requiring password
   # Improves automation capabilities while maintaining security through key-based auth
   ansible.builtin.lineinfile:

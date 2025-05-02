@@ -1,0 +1,7 @@
+- name: Reload systemd modules
+  ansible.builtin.command: depmod
+  changed_when: false
+
+- name: Reload sysctl settings
+  ansible.builtin.command: sysctl --system
+  changed_when: false

@@ -17,7 +17,7 @@
     path: /tmp
     src: tmpfs
     fstype: tmpfs
-    opts: "defaults,noexec,nosuid,nodev"
+    opts: "defaults,noexec,nosuid,nodev,size=1G"
     state: mounted
 
 - name: Bind /var/tmp to /tmp
@@ -49,7 +49,7 @@
     path: /dev/shm
     src: tmpfs
     fstype: tmpfs
-    opts: "defaults,noexec,nosuid,nodev"
+    opts: "defaults,noexec,nosuid,nodev,size=1G"
     state: mounted
 
 - name: Reload systemd to apply new fstab mounts cleanly

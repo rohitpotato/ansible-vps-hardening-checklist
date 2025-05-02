@@ -1,0 +1,42 @@
+---
+# Runtime Security Hardening
+# This role implements security measures for system runtime behavior
+# Focuses on preventing unauthorized system control and information leakage
+
+- name: Disable Magic SysRq keys
+  # Disables kernel's SysRq key combinations completely (value: 0)
+  # Security implications:
+  # - Prevents unauthorized system control via keyboard combinations
+  # - Blocks potentially dangerous kernel commands like memory dumps
+  # - Removes a potential avenue for system manipulation
+  # Note: In emergency situations, recovery might require physical access
+  ansible.posix.sysctl:
+    name: kernel.sysrq
+    value: 0
+    sysctl_file: /etc/sysctl.d/99-kernel-hardening.conf
+    state: present
+
+- name: Disable core dumps from SUID programs
+  # Prevents core dumps from setuid programs (value: 0)
+  # Security implications:
+  # - Stops memory dumps from privileged programs
+  # - Prevents leakage of sensitive information from memory
+  # - Reduces risk of exposing security-critical data
+  # Note: May affect debugging of SUID programs, but security benefit outweighs this
+  ansible.posix.sysctl:
+    name: fs.suid_dumpable
+    value: 0
+    sysctl_file: /etc/sysctl.d/99-kernel-hardening.conf
+    state: present
+
+- name: Disable Ctrl+Alt+Del key sequence reboot
+  # Masks and disables the ctrl-alt-del.target systemd unit
+  # Security implications:
+  # - Prevents accidental or malicious system reboots via keyboard
+  # - Requires proper shutdown commands for system restart
+  # - Enhances physical security by removing quick reboot option
+  # Note: System can still be rebooted via command line by authorized users
+  ansible.builtin.systemd:
+    name: ctrl-alt-del.target
+    masked: true
+    enabled: false
