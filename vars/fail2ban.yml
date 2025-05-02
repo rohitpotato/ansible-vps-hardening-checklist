@@ -1,5 +1,5 @@
-fail2ban_bantime: 30m
-fail2ban_maxretry: 5
-fail2ban_findtime: 10m
-fail2ban_backend: auto
-fail2ban_destination: "rohit.mmm1996@gmail.com"
+fail2ban_bantime: <your-fail2ban-bantime-here>
+fail2ban_maxretry: <your-fail2ban-maxretry-here>
+fail2ban_findtime: <your-fail2ban-findtime-here>
+fail2ban_backend: systemd
+fail2ban_destination: <your-fail2ban-destination-here>

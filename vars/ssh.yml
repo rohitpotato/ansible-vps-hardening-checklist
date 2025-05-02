@@ -1,2 +1,2 @@
-user_name: rohit
-ssh_key_path: ~/.ssh/id_netcup_2_worker.pub
+user_name: <your-ssh-user-here>
+ssh_key_path: <your-ssh-private-key-file-here>
