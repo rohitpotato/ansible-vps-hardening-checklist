@@ -69,6 +69,14 @@ The playbook includes several roles that can be enabled or disabled based on you
 - `system`: System optimizations
 - `runtime`: Runtime configurations
 
+### Daily Reports
+
+Edit the `files/daily-reports.sh` file, to receive comprehensive report on your specified email address.
+
+```
+   EMAIL=myemail@example.com
+```
+
 ## Usage
 
 1. Test the connection to your VPS:

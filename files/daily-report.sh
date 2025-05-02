@@ -1,6 +1,7 @@
 #!/bin/bash
 DATE=$(date "+%Y-%m-%d")
 REPORT="/var/log/daily-security-report-${DATE}.log"
+EMAIL=<your-email-here>
 
 echo "===== SECURITY REPORT FOR ${DATE} =====" > $REPORT
 
@@ -19,4 +20,4 @@ journalctl -u fail2ban --since yesterday >> $REPORT
 echo -e "\n--- Rkhunter Output ---" >> $REPORT
 grep "$(date '+%d/%m/%Y')" /var/log/rkhunter.log >> $REPORT
 
-mail -s "[Daily Security Report] ${DATE}" rohit.mmm1996@gmail.com < $REPORT
+mail -s "[Daily Security Report] ${DATE}" $EMAIL < $REPORT
