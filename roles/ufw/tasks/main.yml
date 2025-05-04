@@ -54,6 +54,7 @@
   loop:
     - 443
     - 80
+    - 6443 # kubernetes api
 
 - name: Enable ufw
   # Activates the firewall with the configured rules
