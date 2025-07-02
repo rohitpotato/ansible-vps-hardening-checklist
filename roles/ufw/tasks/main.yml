@@ -55,6 +55,7 @@
     - 443
     - 80
     - 6443 # kubernetes api
+    - 8472 # for inter-node communication b/w nodes
 
 - name: Enable ufw
   # Activates the firewall with the configured rules
